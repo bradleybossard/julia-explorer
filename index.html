@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,7 +7,259 @@
     <title>Vite + TS</title>
   </head>
   <body>
-    <div id="app"></div>
+    <canvas id="canvas" width="600" height="600"> </canvas>
+
+    <div>
+      <button type="button" id="move-left">&larr; Left</button>
+      <button type="button" id="move-up">&uarr; Up</button>
+      <button type="button" id="move-down">Down &darr;</button>
+      <button type="button" id="move-right">Right &rarr;</button>
+    </div>
+    <div>
+      <button type="button" id="zoom-in">+ Zoom In</button>
+      <button type="button" id="zoom-out">Zoom Out &minus;</button>
+    </div>
+
+    <p>Click to zoom in, shift+click to zoom out.</p>
+
+    <p>
+      <input
+        type="checkbox"
+        id="mousenavi"
+        name="mousenavi"
+        checked="checked"
+      />
+      <label for="mousenavi">Enable mouse navigation</label>
+    </p>
+
+    <p>Rendered in <span id="timer">0</span> milliseconds</p>
+
+    <h3>Julia Parameters</h3>
+
+    <p id="equation"></p>
+
+    <div>
+      <input
+        type="number"
+        min="2"
+        max="10"
+        value="2"
+        id="power-number"
+        style="width: 5rem"
+      />
+      <input
+        type="range"
+        id="power-slider"
+        name="power-slider"
+        min="2"
+        max="10"
+        value="2"
+        step="1"
+      />
+      <label for="power-number">z^</label>
+      <span id="powermonitor" class="monitor"></span>
+    </div>
+
+    <div>
+      <input
+        type="number"
+        min="-2"
+        max="2"
+        value="0"
+        id="creal-number"
+        style="width: 5rem"
+      />
+      <input
+        type="range"
+        id="creal-slider"
+        name="creal-slider"
+        min="-2"
+        max="2"
+        value="0"
+        step="0.001"
+        style="width: 21rem"
+      />
+      <label for="creal-number">Re(c)</label>
+    </div>
+
+    <div>
+      <input
+        type="number"
+        min="-2"
+        max="2"
+        value="1"
+        id="cimag-number"
+        style="width: 5rem"
+      />
+      <input
+        type="range"
+        id="cimag-slider"
+        name="cimag-slider"
+        min="-2"
+        max="2"
+        value="1"
+        step="0.001"
+        style="width: 21rem"
+      />
+      <label for="cimag-number">Im(c)</label>
+    </div>
+
+    <h3>Color</h3>
+
+    <div>
+      <select id="palette" name="palette"></select>
+      <label for="colorscheme">Palette</label>
+    </div>
+
+    <div>
+      <input
+        type="range"
+        id="expos"
+        name="expos"
+        min="0"
+        max="32"
+        value="4"
+        step="0.5"
+        style="width: 13rem"
+      />
+      <label for="expos">Exposure</label>
+      <span id="exposmonitor" class="monitor"></span>
+    </div>
+
+    <div>
+      <input type="checkbox" id="smoothed" name="smoothed" />
+      <label for="smoothed">Smoothed</label>
+    </div>
+
+    <h3>Viewport</h3>
+
+    <div>
+      <input
+        type="number"
+        id="offreal"
+        name="offreal"
+        min="-2"
+        max="2"
+        value="0"
+        style="width: 120px"
+      />
+      <label for="offreal">Re(mid)</label>
+    </div>
+    <div>
+      <input
+        type="number"
+        id="offimag"
+        name="offimag"
+        min="-2"
+        max="2"
+        value="0"
+        style="width: 120px"
+      />
+      <label for="offimag">Im(mid)</label>
+    </div>
+    <div>
+      <input
+        type="number"
+        id="scale"
+        name="scale"
+        min="100"
+        value="200"
+        step="100"
+        style="width: 120px"
+      />
+      <label for="scale">Scale multiplier</label>
+    </div>
+
+    <div>
+      <input
+        type="number"
+        id="width"
+        name="width"
+        min="64"
+        max="16384"
+        value="600"
+        step="1"
+      />
+      <label for="width">Width</label>
+    </div>
+
+    <div>
+      <input
+        type="number"
+        id="height"
+        name="height"
+        min="64"
+        max="16384"
+        value="600"
+        step="1"
+      />
+      <label for="height">Height</label>
+    </div>
+
+    <button type="button" id="viewport-button">Apply Viewport Settings</button>
+    <button type="button" id="viewport-reset">Reset Viewport Settings</button>
+
+    <h3>Pixel Iteration</h3>
+
+    <p>
+      To find if a pixel is in the Julia set, we find if its complex coordinate
+      grows limitlessly (is divergent) or approaches some local point (is
+      convergent) when iterated with the function.
+    </p>
+
+    <div>
+      <input
+        type="number"
+        id="iterations"
+        name="iterations"
+        min="2"
+        max="32000"
+        value="256"
+        step="1"
+      />
+      <label for="iterations">Iterations until classified as convergent</label>
+    </div>
+
+    <div>
+      <input
+        type="number"
+        id="escape"
+        name="escape"
+        min="2"
+        max="20000"
+        value="256"
+        step="1"
+      />
+      <label for="escape">Max value after classify as divergent</label>
+    </div>
+
+    <button type="button" id="iteration-button">
+      Apply Iteration Settings
+    </button>
+
+    <h3>Fractal Dimension</h3>
+
+    <p>
+      This tool estimates a fractal dimension for the visible portion of the
+      image using the box-counting method.
+    </p>
+
+    <p id="boxcount-counts"></p>
+    <p id="boxcount-dimensions"></p>
+
+    <p>Box-counting dimension: <span id="boxcount-estimate">0</span></p>
+
+    <p><button type="button" id="boxcount-button">Compute</button></p>
+
+    <div style="height: 6rem"></div>
+
+    <p>
+      See the source at
+      <a href="https://github.com/axelpale/julia-explorer" target="_blank"
+        >axelpale/julia-explorer</a
+      >
+      on GitHub
+    </p>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
