@@ -1,24 +1,885 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import "./style.css";
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+(function () {
+  const opaque = 255;
+  const sqrt = Math.sqrt;
+  const limit = (a, min, max) => Math.min(Math.max(a, min), max);
+  const linear = (x, min, max) => {
+    // Return number, 0..1, where 0 when x==min and 1 when x==max
+    return (x - min) / (max - min);
+  };
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+  const rgba = function (r, g, b, a) {
+    return {
+      r: limit(Math.round(r), 0, 255),
+      g: limit(Math.round(g), 0, 255),
+      b: limit(Math.round(b), 0, 255),
+      a: limit(Math.round(a), 0, 255),
+    };
+  };
+
+  const gradient = function (m, fromColor, toColor) {
+    // Parameters
+    //   m
+    //     number 0..1
+    //   fromColor
+    //     rgba
+    //   toColor
+    //     rgba
+    //
+    m = limit(m, 0, 1);
+    return rgba(
+      (1 - m) * fromColor.r + m * toColor.r,
+      (1 - m) * fromColor.g + m * toColor.g,
+      (1 - m) * fromColor.b + m * toColor.b,
+      (1 - m) * fromColor.a + m * toColor.a
+    );
+  };
+
+  const gradientSet = (colors, positions) => {
+    return (m) => {
+      // Parameters:
+      //   m
+      //     number 0..1
+      //
+
+      // Handle sweep begin
+      if (m < positions[0]) {
+        return colors[0];
+      }
+      // Begin
+
+      for (let i = 1; i < positions.length; i += 1) {
+        if (m < positions[i]) {
+          // Map along single gradient
+          let x = linear(m, positions[i - 1], positions[i]);
+          return gradient(x, colors[i - 1], colors[i]);
+        }
+      }
+
+      // Return last color
+      return colors[colors.length - 1];
+    };
+  };
+
+  // https://htmlcolorcodes.com/color-names/
+  const deepSkyBlue = rgba(0, 191, 255, opaque);
+  const lightSkyBlue = rgba(135, 206, 250, opaque);
+  const whiteSmoke = rgba(245, 245, 245, opaque);
+  const slateGray = rgba(112, 128, 144, opaque);
+  // Rose colors
+  const darkBlack = rgba(33, 39, 33, opaque);
+  const darkBrown = rgba(49, 38, 29, opaque);
+  const darkGreen = rgba(84, 98, 35, opaque);
+  const leafGreen = rgba(100, 167, 11, opaque);
+  const darkRose = rgba(124, 37, 41, opaque);
+  const roseRed = rgba(238, 39, 55, opaque);
+  const pinkLips = rgba(224, 0, 77, opaque);
+
+  // Available color palettes. Place the default palette first.
+  const palettes = {
+    flame: (l) => {
+      l = limit(l, 0, 255);
+      return {
+        r: limit(9 * l - 256, 0, 240) + 15,
+        g: limit(5 * l - 256, 0, 255),
+        b: limit(3 * l - 256, 0, 255),
+        a: opaque,
+      };
+    },
+    rose: (l) => {
+      const x0 = 0;
+      const x1 = 80;
+      const x2 = 128;
+      const x3 = 200;
+      const x4 = 255;
+      // From x0 to x1
+      if (l < x1) {
+        return gradient((l - x0) / (x1 - x0), darkBlack, darkBrown);
+      }
+      if (l < x2) {
+        return gradient((l - x1) / (x2 - x1), darkBrown, darkRose);
+      }
+      if (l < x3) {
+        return gradient((l - x2) / (x3 - x2), darkRose, roseRed);
+      }
+      return gradient((l - x3) / (x4 - x3), roseRed, darkRose);
+    },
+    // Sea and island like gradient
+    islands: gradientSet(
+      [
+        rgba(0, 147, 225, opaque), // farSea
+        rgba(0, 168, 223, opaque), // midSea
+        rgba(1, 140, 154, opaque), // lowSea
+        rgba(3, 169, 119, opaque), // beachSea
+        rgba(255, 252, 201, opaque), // beachSand
+        rgba(255, 252, 201, opaque), // beachSand
+        rgba(64, 94, 14, opaque), // darkJungle
+        rgba(130, 171, 35, opaque), // lightJungle
+        rgba(64, 94, 14, opaque), // darkJungle
+        rgba(100, 100, 107, opaque), // rock shadow
+        rgba(201, 194, 179, opaque), // beachRock,
+        rgba(40, 33, 33, opaque), // dark volcanic rock
+        rgba(237, 55, 31, opaque), // lava low
+        rgba(253, 233, 38, opaque), // lava high
+      ],
+      [
+        5,
+        30,
+        80,
+        89, // water
+        90,
+        99, // beach
+        100,
+        123,
+        145, // jungle
+        150,
+        200,
+        250, // mountain
+        255,
+        350, // lava
+      ]
+    ),
+    // Rainbow
+    rainbow: (l) => {
+      l = limit(l, 0, 255);
+      return {
+        r: Math.floor(255 * Math.sin((Math.PI * 2 * l) / 255)),
+        g: Math.floor(255 * Math.cos((Math.PI * 2 * l) / 255)),
+        b: Math.floor(255 * Math.sin((Math.PI * l) / 255)),
+        a: opaque,
+      };
+    },
+    clouds: (l) => {
+      if (l < 20) {
+        return gradient(l / 20, deepSkyBlue, lightSkyBlue);
+      }
+      if (l < 30) {
+        return gradient((l - 20) / 10, lightSkyBlue, whiteSmoke);
+      }
+      return gradient((l - 30) / (255 - 30), whiteSmoke, slateGray);
+    },
+    monored: (l) => rgba(l, 0, 0, opaque),
+    monogreen: (l) => rgba(0, l, 0, opaque),
+    monoblue: (l) => rgba(0, 0, l, opaque),
+    gray: (l) => {
+      return rgba(l, l, l, opaque);
+    },
+    grayloop: (l) => {
+      l = 128 * (Math.sin((2 * Math.PI * l) / 256) + 1);
+      return rgba(l, l, l, opaque);
+    },
+    blackwhite: (l) => {
+      if (l > 128) {
+        return rgba(255, 255, 255, opaque);
+      }
+      return rgba(0, 0, 0, opaque);
+    },
+  };
+
+  const getPixel = function (imageData, x, y) {
+    const index = 4 * (x + y * imageData.width);
+    return {
+      r: imageData.data[index + 0],
+      g: imageData.data[index + 1],
+      b: imageData.data[index + 2],
+      a: imageData.data[index + 3],
+    };
+  };
+
+  const setPixel = function (imageData, x, y, color) {
+    const index = 4 * (x + y * imageData.width);
+    imageData.data[index + 0] = color.r;
+    imageData.data[index + 1] = color.g;
+    imageData.data[index + 2] = color.b;
+    imageData.data[index + 3] = color.a;
+  };
+
+  const pixelLightness = function (rgba) {
+    // Linear lightness 0..255
+    return Math.round((rgba.r + rgba.g + rgba.b) / 3);
+  };
+
+  const complexAbs = function (z) {
+    return Math.sqrt(z.r * z.r + z.i * z.i);
+  };
+
+  const complexAdd = function (x, y) {
+    return {
+      r: x.r + y.r,
+      i: x.i + y.i,
+    };
+  };
+
+  const complexDiff = function (x, y) {
+    return {
+      r: x.r - y.r,
+      i: x.i - y.i,
+    };
+  };
+
+  const complexScale = function (z, m) {
+    // m, multiplier
+    return {
+      r: m * z.r,
+      i: m * z.i,
+    };
+  };
+
+  const complexMultiply = function (x, y) {
+    // Parameters
+    //   x
+    //     { r, i }
+    //   y
+    //     { r, i }
+    //
+    const ac = x.r * y.r;
+    const bd = x.i * y.i;
+    return {
+      r: ac - bd,
+      i: (x.r + x.i) * (y.r + y.i) - ac - bd,
+    };
+  };
+
+  const gaussian = function () {
+    // Poor man's gaussian
+    let rand = 0;
+
+    for (var i = 0; i < 6; i += 1) {
+      rand += Math.random();
+    }
+
+    return rand / 6 - 0.5;
+  };
+
+  const makeJulia = function (power, c) {
+    // More readable but slower code.
+    //   return function (z) {
+    //     // z^n
+    //     let product = z
+    //     for (let i = 1; i < power; i += 1) {
+    //       product = complexMultiply(product, z)
+    //     }
+    //     // z^n + c
+    //     return complexAdd(product, c)
+    //   }
+    return function (z) {
+      // z^n
+      const zre = z.r;
+      const zim = z.i;
+      let re = z.r;
+      let im = z.i;
+      let pre = re;
+      for (let i = 1; i < power; i += 1) {
+        pre = re * zre - im * zim;
+        im = (re + im) * (zre + zim) - re * zre - im * zim;
+        re = pre;
+      }
+      // z^n + c
+      return {
+        r: re + c.r,
+        i: im + c.i,
+      };
+    };
+  };
+
+  const convergence = function (params) {
+    // Iterations before max value reached.
+    //
+    // Parameters
+    //   params, object with props
+    //     init
+    //       { r, i }
+    //     iteratee
+    //       fn: { r, i } => { r, i }
+    //     iterations
+    //       integer
+    //     escapeValue
+    //       number
+    //     smoothed
+    //       boolean, false by default
+    //     power
+    //       integer, required for smoothing
+    //
+    // Return
+    //   number of iterations, float if smoothed, integer if not.
+    //
+    const iteratee = params.iteratee;
+    const iterations = params.iterations;
+    const valueLimit = params.escapeValue;
+    const smoothed = params.smoothed ? true : false;
+    const power = params.power;
+    let val = params.init;
+    let i = 0;
+    let magnitude = 0;
+
+    do {
+      val = iteratee(val);
+      magnitude = complexAbs(val);
+      i += 1;
+    } while (i < iterations && magnitude < valueLimit);
+
+    if (smoothed) {
+      const exp = Math.log(magnitude) / Math.log(valueLimit);
+      return i + 0.5 - (exp - 1) / (power - 1);
+    }
+    return i;
+  };
+
+  const forEachPixel = function (imageData, iteratee) {
+    for (let x = 0; x < imageData.width; x += 1) {
+      for (let y = 0; y < imageData.height; y += 1) {
+        iteratee(imageData, x, y);
+      }
+    }
+  };
+
+  const pxToComplex = function (x, y, scale, offset) {
+    // Normalize.
+    const r = (x - canvas.width / 2) / scale + offset.r;
+    const i = (y - canvas.height / 2) / scale + offset.i;
+    return {
+      r: r,
+      i: i,
+    };
+  };
+
+  const complexToPx = function (z, scale, offset) {
+    // Parameters
+    //   z
+    //     a { r, i } complex number
+    //   scale
+    //   offset
+    //     { r, i }
+    //
+    // Return
+    //   a pixel position as { x, y }
+    //
+    // Deduce from complexToPx
+    // <=> z.r - offset.r = (x - canvas.width / 2) / scale
+    //     z.i - offset.i = (y - canvas.height / 2) / scale
+    // <=> scale * (z.r - offset.r) + canvas.width / 2 = x
+    //     scale * (z.i - offset.i) + canvas.height / 2 = y
+    //
+    return {
+      x: scale * (z.r - offset.r) + canvas.width / 2,
+      y: scale * (z.i - offset.i) + canvas.height / 2,
+    };
+  };
+
+  const semaphore = function (fn) {
+    // Async semaphore with 1-slot memory
+    let running = false;
+    let memory = false;
+    let ma, mb, mc, md;
+    return function self(a, b, c, d) {
+      if (running) {
+        // Store latest rerun request.
+        memory = true;
+        ma = a;
+        mb = b;
+        mc = c;
+        md = d;
+        return;
+      }
+      // If not running
+      running = true;
+      memory = false;
+      fn(a, b, c, d);
+      // After running, check if rerun requested
+      // and rerun if so.
+      setTimeout(() => {
+        running = false;
+        if (memory) {
+          memory = false;
+          self(ma, mb, mc, md);
+        }
+      }, 0);
+    };
+  };
+
+  let drawIterateeNext = null;
+  let drawIterateeRunning = false;
+  const drawIteratee = function (ctx, params) {
+    // Parameters
+    //   ctx
+    //     drawing context
+    //   params
+    //     iteratee
+    //       fn { r, i } => { r, i }
+    //     width
+    //       integer
+    //     height
+    //       integer
+    //     scale
+    //       number
+    //     offset
+    //       { r, i }
+    //     palette
+    //       string, palette name
+    //     exposure
+    //       number
+    //     smoothed
+    //       boolean
+    //     iterations
+    //       integer
+    //     escapeValue
+    //       number
+    //
+
+    // Begin with empty canvas
+    const img = ctx.getImageData(0, 0, params.width, params.height);
+
+    // Extract args
+    const iteratee = params.iteratee;
+    const scale = params.scale;
+    const offset = params.offset;
+    const smoothed = params.smoothed;
+    const exposure = params.exposure;
+    const iterations = params.iterations;
+    const escapeValue = params.escapeValue;
+    const colorFn = palettes[params.palette];
+
+    // Pre-detect iteratee power for smoothing
+    const power = Math.log(complexAbs(iteratee({ r: 2, i: 0 }))) / Math.log(2);
+
+    // Compute each pixel
+    forEachPixel(img, (imageData, x, y) => {
+      // Normalize.
+      const z = pxToComplex(x, y, scale, offset);
+      // Does iteratee converge at z?
+      const conv = convergence({
+        init: z,
+        iteratee: iteratee,
+        iterations: iterations,
+        escapeValue: escapeValue,
+        smoothed: smoothed,
+        power: power,
+      });
+      // Pick color
+      const lightness = conv * exposure;
+      const color = colorFn(lightness);
+      // Draw pixel
+      setPixel(imageData, x, y, color);
+    });
+
+    // Draw image on canvas
+    ctx.putImageData(img, 0, 0);
+  };
+
+  const saveState = function (obj) {
+    const str = JSON.stringify(obj);
+    window.localStorage.setItem("julia-explorer", str);
+  };
+
+  const loadState = function () {
+    const str = window.localStorage.getItem("julia-explorer");
+    if (str) {
+      return JSON.parse(str);
+    }
+    return null;
+  };
+
+  // Julia, click to zoom, adjust to modify.
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const state = {
+    power: 0,
+    c: { r: 0, i: 0 },
+    scale: 0,
+    offset: { r: 0, i: 0 },
+    width: 0,
+    height: 0,
+    palette: "",
+    exposure: 0,
+    smoothed: false,
+    iterations: 0,
+    escapeValue: 0,
+  };
+
+  const timerMonitor = document.getElementById("timer");
+  const originalTitle = document.title;
+  const renderJulia = semaphore((ctx: any, params: any) => {
+    // Ensure canvas size but prevent unnecessary reset to avoid flicker.
+    if (canvas.width !== state.width || canvas.height !== state.height) {
+      canvas.width = state.width;
+      canvas.height = state.height;
+    }
+    // Temporary title
+    document.title = "Julia RENDERING...";
+    // Give browser a moment to refresh waiting message DOM
+    setTimeout(() => {
+      // Create iteratee
+      const iteratee = makeJulia(params.power, params.c);
+      // Render and measure rendering time
+      const beginTime = performance.now();
+      drawIteratee(
+        ctx,
+        Object.assign({}, params, {
+          iteratee: iteratee,
+        })
+      );
+      const finishTime = performance.now();
+      const elapsedTime = finishTime - beginTime; // milliseconds
+      timerMonitor.innerHTML = elapsedTime.toFixed(0);
+      // Resume to original title
+      document.title = originalTitle;
+    }, 50);
+  });
+
+  const powerSlider = document.getElementById("power-slider");
+  const crealSlider = document.getElementById("creal-slider");
+  const cimagSlider = document.getElementById("cimag-slider");
+  const equationMonitor = document.getElementById("equation");
+  const powerNumber = document.getElementById("power-number");
+  const crealNumber = document.getElementById("creal-number");
+  const cimagNumber = document.getElementById("cimag-number");
+  const powerMonitor = document.getElementById("powermonitor");
+  const applyStructureForm = () => {
+    state.power = parseInt(powerNumber.value);
+    state.c = {
+      r: parseFloat(crealNumber.value),
+      i: parseFloat(cimagNumber.value),
+    };
+  };
+  const updateStructureLabels = () => {
+    // Rewrite labels
+    powerMonitor.innerHTML = "" + state.power;
+    // Rewrite equation
+    const re = state.c.r;
+    const im = state.c.i;
+    equationMonitor.innerHTML =
+      "z<sub>n+1</sub> = " +
+      "z<sub>n</sub>" +
+      "<sup>" +
+      state.power +
+      "</sup> " +
+      (re < 0 ? "-" : "+") +
+      " " +
+      Math.abs(re).toFixed(3) +
+      " " +
+      (im < 0 ? "-" : "+") +
+      " " +
+      Math.abs(im).toFixed(3) +
+      "i";
+  };
+  const writeStructureForm = () => {
+    powerNumber.value = state.power;
+    crealNumber.value = state.c.r;
+    cimagNumber.value = state.c.i;
+    powerSlider.value = state.power;
+    crealSlider.value = state.c.r;
+    cimagSlider.value = state.c.i;
+    updateStructureLabels();
+  };
+  const renderStructure = () => {
+    applyStructureForm();
+    updateStructureLabels();
+    saveState(state);
+    renderJulia(ctx, state);
+  };
+  const propagateSlider = () => {
+    // Copy slider values to number fields
+    powerNumber.value = powerSlider.value;
+    crealNumber.value = crealSlider.value;
+    cimagNumber.value = cimagSlider.value;
+    // Then refresh everything elses.
+    renderStructure();
+  };
+  const propagateNumber = () => {
+    // Copy number values to slider fields
+    powerSlider.value = powerNumber.value;
+    crealSlider.value = crealNumber.value;
+    cimagSlider.value = cimagNumber.value;
+    // Then refresh everything elses.
+    renderStructure();
+  };
+  powerSlider.addEventListener("change", propagateSlider);
+  crealSlider.addEventListener("change", propagateSlider);
+  cimagSlider.addEventListener("change", propagateSlider);
+  powerNumber.addEventListener("change", propagateNumber);
+  crealNumber.addEventListener("change", propagateNumber);
+  cimagNumber.addEventListener("change", propagateNumber);
+
+  // Color
+  const palettePicker = document.getElementById("palette");
+  const smoothedCheck = document.getElementById("smoothed");
+  const exposSlider = document.getElementById("expos");
+  const exposMonitor = document.getElementById("exposmonitor");
+  const applyColorForm = () => {
+    state.palette = palettePicker.value;
+    state.smoothed = smoothedCheck.checked;
+    state.exposure = parseFloat(exposSlider.value);
+  };
+  const updateColorLabels = () => {
+    exposMonitor.innerHTML = state.exposure.toFixed(1);
+  };
+  const writeColorForm = () => {
+    palettePicker.value = state.palette;
+    smoothedCheck.checked = state.smoothed;
+    exposSlider.value = state.exposure;
+    updateColorLabels();
+  };
+  const renderColor = () => {
+    applyColorForm();
+    updateColorLabels();
+    saveState(state);
+    renderJulia(ctx, state);
+  };
+  palettePicker.addEventListener("change", renderColor);
+  smoothedCheck.addEventListener("change", renderColor);
+  exposSlider.addEventListener("change", renderColor);
+  // Setup palette options
+  Object.keys(palettes).forEach((key) => {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.innerHTML = key;
+    palettePicker.appendChild(opt);
+  });
+
+  // Viewport and position
+  const offrealControl = document.getElementById("offreal");
+  const offimagControl = document.getElementById("offimag");
+  const scaleControl = document.getElementById("scale");
+  const widthControl = document.getElementById("width");
+  const heightControl = document.getElementById("height");
+  const viewportButton = document.getElementById("viewport-button");
+  const viewportReset = document.getElementById("viewport-reset");
+  const applyViewportForm = () => {
+    state.offset = {
+      r: parseFloat(offrealControl.value),
+      i: parseFloat(offimagControl.value),
+    };
+    state.scale = parseInt(scaleControl.value);
+    state.width = parseInt(widthControl.value);
+    state.height = parseInt(heightControl.value);
+  };
+  const writeViewportForm = () => {
+    offrealControl.value = state.offset.r;
+    offimagControl.value = state.offset.i;
+    scaleControl.value = state.scale.toFixed(0);
+    widthControl.value = state.width;
+    heightControl.value = state.height;
+  };
+  const renderViewport = () => {
+    applyViewportForm();
+    saveState(state);
+    renderJulia(ctx, state);
+  };
+  const resetViewport = () => {
+    offrealControl.value = 0;
+    offimagControl.value = 0;
+    scaleControl.value = 200;
+    widthControl.value = 600;
+    heightControl.value = 600;
+    applyViewportForm();
+    saveState(state);
+    renderJulia(ctx, state);
+  };
+  viewportButton.addEventListener("click", renderViewport);
+  viewportReset.addEventListener("click", resetViewport);
+
+  // Pixel iteration
+  const iterationsControl = document.getElementById("iterations");
+  const escapeControl = document.getElementById("escape");
+  const iterationButton = document.getElementById("iteration-button");
+  const writeIterationForm = () => {
+    iterationsControl.value = state.iterations;
+    escapeControl.value = state.escapeValue;
+  };
+  const applyIterationForm = () => {
+    state.iterations = parseInt(iterationsControl.value);
+    state.escapeValue = parseInt(escapeControl.value);
+  };
+  const renderIteration = () => {
+    applyIterationForm();
+    saveState(state);
+    renderJulia(ctx, state);
+  };
+  iterationButton.addEventListener("click", renderIteration);
+
+  // Box-counting fractal dimension
+  const boxcountCounts = document.getElementById("boxcount-counts");
+  const boxcountDims = document.getElementById("boxcount-dimensions");
+  const boxcountEstimate = document.getElementById("boxcount-estimate");
+  const boxcountButton = document.getElementById("boxcount-button");
+  const hasBoxLightAndDarkPixel = (imageData, x0, y0, x1, y1) => {
+    // Tests if rectangular area of the given image
+    // has any pixels lighter than 128.
+    let hasLight = false;
+    let hasDark = false;
+    let x, y, px;
+    for (y = y0; y < y1; y += 1) {
+      for (x = x0; x < x1; x += 1) {
+        px = getPixel(imageData, x, y);
+        if (pixelLightness(px) >= 128) {
+          hasLight = true;
+        } else {
+          hasDark = true;
+        }
+        if (hasLight && hasDark) {
+          return true;
+        }
+      }
+    }
+    // Only light pixels or only dark pixels
+    return false;
+  };
+  const renderBoxcount = () => {
+    // Size of largest box
+    const initSize = 64;
+    const minSize = 4;
+    // Image dimensions. Include only full boxes
+    const w = initSize * Math.floor(canvas.width / initSize);
+    const h = initSize * Math.floor(canvas.height / initSize);
+    // Include only full boxes
+    const img = ctx.getImageData(0, 0, w, h);
+    // Store box counts: size => count
+    const counts = [];
+    // Loop through sizes, half the size per iteration
+    for (let size = initSize; size >= minSize; size = size / 2) {
+      // Init count
+      const count = {
+        size: size,
+        boxes: 0,
+        total: 0,
+      };
+      // For each box. Note that no partial boxes are allowed.
+      for (let byi = 0; byi * size < h; byi += 1) {
+        for (let bxi = 0; bxi * size < w; bxi += 1) {
+          // Count the box in if it contains a pixel in and out the julia set
+          let x0 = bxi * size;
+          let y0 = byi * size;
+          let x1 = x0 + size;
+          let y1 = y0 + size;
+          count.total += 1;
+          if (hasBoxLightAndDarkPixel(img, x0, y0, x1, y1)) {
+            count.boxes += 1;
+          }
+          // If the box contains no pixels of the set, count is as zero.
+          // TODO skip boxes already determined as only dark or only light.
+        }
+      }
+      // Precompute log(n) and log(1/s) for analysis,
+      // where n is num of boxes, and s the normalized image size
+      count.logn = Math.log(count.boxes);
+      count.logs = -Math.log(size / w); // NOTE assumes image to be square
+      counts.push(count);
+    }
+    // List the counts
+    boxcountCounts.innerHTML = counts.reduce((str, count) => {
+      return (
+        str + count.size + ": " + count.boxes + " of " + count.total + "<br>"
+      );
+    }, "");
+    // List the dimensions of the counts
+    boxcountDims.innerHTML = counts.reduce((str, count) => {
+      const dim = count.logn / count.logs;
+      return (
+        str +
+        count.size +
+        ": log(n) = " +
+        count.logn.toFixed(3) +
+        ", " +
+        "log(1/s) = " +
+        count.logs.toFixed(3) +
+        ", " +
+        "dim = " +
+        dim.toFixed(3) +
+        "<br>"
+      );
+    }, "");
+    // Estimate the dimension using linear regression and least squares
+    const regression = counts.reduce(
+      (reg, count) => {
+        reg.sumxy += count.logs * count.logn;
+        reg.sumxx += count.logs * count.logs;
+        return reg;
+      },
+      { sumxy: 0, sumxx: 0 }
+    );
+    const estimate = regression.sumxy / regression.sumxx;
+    boxcountEstimate.innerHTML = estimate.toFixed(3);
+  };
+  boxcountButton.addEventListener("click", renderBoxcount);
+
+  // Navigation buttons
+  const leftButton = document.getElementById("move-left");
+  const upButton = document.getElementById("move-up");
+  const downButton = document.getElementById("move-down");
+  const rightButton = document.getElementById("move-right");
+  const zoomInButton = document.getElementById("zoom-in");
+  const zoomOutButton = document.getElementById("zoom-out");
+  const moveSpeed = 10;
+  const scaleFactor = 1.25;
+  const generateMove = function (dx, dy) {
+    return function () {
+      state.offset = {
+        r: state.offset.r + dx / state.scale,
+        i: state.offset.i + dy / state.scale,
+      };
+      writeViewportForm();
+      saveState(state);
+      renderJulia(ctx, state);
+    };
+  };
+  const generateScale = function (factor) {
+    return function () {
+      state.scale = state.scale * factor;
+      writeViewportForm();
+      saveState(state);
+      renderJulia(ctx, state);
+    };
+  };
+  leftButton.addEventListener("click", generateMove(-moveSpeed, 0));
+  rightButton.addEventListener("click", generateMove(moveSpeed, 0));
+  upButton.addEventListener("click", generateMove(0, -moveSpeed));
+  downButton.addEventListener("click", generateMove(0, moveSpeed));
+  zoomInButton.addEventListener("click", generateScale(scaleFactor));
+  zoomOutButton.addEventListener("click", generateScale(1 / scaleFactor));
+
+  // Click to zoom
+  const mousenaviCheckbox = document.getElementById("mousenavi");
+  canvas.addEventListener("click", (ev) => {
+    if (!mousenaviCheckbox.checked) {
+      // Mouse navigation disabled
+      return;
+    }
+    const x = ev.offsetX;
+    const y = ev.offsetY;
+    const clickz = pxToComplex(x, y, state.scale, state.offset);
+    const centerz = state.offset;
+    const dz = complexDiff(centerz, clickz);
+    if (ev.altKey || ev.shiftKey) {
+      // Zoom out, keep click position fixed
+      state.scale = state.scale / scaleFactor;
+      state.offset = complexAdd(complexScale(dz, scaleFactor), clickz);
+    } else {
+      // Zoom in, keep click position fixed
+      state.scale = state.scale * scaleFactor;
+      state.offset = complexAdd(complexScale(dz, 1 / scaleFactor), clickz);
+    }
+    writeViewportForm();
+    saveState(state);
+    renderJulia(ctx, state);
+  });
+
+  const storedState = loadState();
+  if (storedState) {
+    Object.assign(state, storedState);
+    // Update form to match the stored state.
+    writeStructureForm();
+    writeColorForm();
+    writeViewportForm();
+    writeIterationForm();
+  } else {
+    // Read state from the form
+    applyStructureForm();
+    updateStructureLabels();
+    applyColorForm();
+    updateColorLabels();
+    applyViewportForm();
+    applyIterationForm();
+  }
+  renderJulia(ctx, state);
+})();
